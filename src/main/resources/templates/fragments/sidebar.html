@@ -1,0 +1,30 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="sidebar" class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+        <a class="brand" th:href="@{/dashboard}">
+            <span class="brand-mark">I</span>
+            <span>Inven<span class="brand-accent">tra</span></span>
+        </a>
+    </div>
+
+    <div class="sidebar-label">Workspace</div>
+    <ul class="nav-list" id="nav-list"></ul>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-actions">
+        <div class="user-mini">
+            <div class="avatar" id="sidebar-avatar">I</div>
+            <div>
+                <strong id="sidebar-username">Account</strong>
+                <span id="sidebar-role">Authenticated user</span>
+            </div>
+        </div>
+        <button id="theme-toggle" class="btn btn-secondary btn-full">☀ Light mode</button>
+        <button class="btn btn-ghost btn-full" onclick="WareflowAuth.logout()">↪ Log out</button>
+    </div>
+</div>
+</body>
+</html>

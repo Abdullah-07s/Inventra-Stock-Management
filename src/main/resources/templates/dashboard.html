@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Dashboard')}"></head>
+<body>
+<div class="mobile-topbar">
+    <button class="menu-btn" id="menu-btn" aria-label="Open navigation">☰</button>
+    <a class="brand" th:href="@{/dashboard}"><span class="brand-mark">I</span><span>Inven<span class="brand-accent">tra</span></span></a>
+    <button class="menu-btn" id="mobile-theme" aria-label="Toggle theme">◐</button>
+</div>
+<div class="app-shell">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <header class="page-header">
+            <div>
+                <div class="eyebrow" id="page-eyebrow">Inventory workspace</div>
+                <h1>Good to see you, <span id="welcome-username">there</span>.</h1>
+                <p class="page-subtitle" id="page-subtitle">Here's what is happening across your workspace.</p>
+            </div>
+            <div class="header-actions">
+                <span class="badge badge-accent" id="welcome-role">User</span>
+            </div>
+        </header>
+
+        <section class="stat-grid" id="overview-stats">
+            <article class="stat-card"><div class="stat-top"><span>Products</span><span class="stat-icon">▦</span></div><div class="stat-value" id="stat-products">—</div><div class="stat-meta">catalogued items</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Orders</span><span class="stat-icon">↗</span></div><div class="stat-value" id="stat-orders">—</div><div class="stat-meta" id="stat-orders-meta">visible to you</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Stock units</span><span class="stat-icon">▤</span></div><div class="stat-value" id="stat-stock">—</div><div class="stat-meta">across visible warehouses</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Suppliers</span><span class="stat-icon">◈</span></div><div class="stat-value" id="stat-suppliers">—</div><div class="stat-meta">connected suppliers</div></article>
+        </section>
+
+        <section class="dashboard-section" id="admin-section">
+            <div class="callout">
+                <div class="eyebrow">Super Admin</div>
+                <h2>Control access, not just accounts.</h2>
+                <p>Promote users to administrators and assign only the activity permissions each administrator actually needs.</p>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <div class="card-header"><div><div class="card-title">Promote a user</div><div class="card-description">Enter a registered user's ID to grant ADMIN access.</div></div></div>
+                <div class="form-grid"><div class="form-group"><label for="promote-user-id">User ID</label><input type="number" id="promote-user-id" placeholder="e.g. 42"></div><div class="form-actions" style="margin-top:0;align-items:end;"><button class="btn btn-primary" onclick="promoteUser()">Promote to admin →</button></div></div>
+                <div id="promote-msg" class="muted" style="margin-top:10px;font-size:.75rem;"></div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <div class="card-header"><div><div class="card-title">Admin permissions</div><div class="card-description">Each admin receives only the activities granted here.</div></div></div>
+                <div class="table-wrap"><table><thead><tr><th>Admin</th><th>Email</th><th>Granted activities</th><th>Permissions</th></tr></thead><tbody id="admins-table-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="products-section">
+            <div class="card" id="add-product-card">
+                <div class="card-header"><div><div class="card-title">Add product</div><div class="card-description">Create a new catalog item for the inventory.</div></div><span class="badge badge-accent">Manage products</span></div>
+                <div id="product-msg" class="hidden"></div>
+                <div class="form-grid">
+                    <div class="form-group"><label for="new-sku">SKU</label><input type="text" id="new-sku" placeholder="SKU-10482"></div>
+                    <div class="form-group"><label for="new-name">Product name</label><input type="text" id="new-name" placeholder="Wireless barcode scanner"></div>
+                    <div class="form-group"><label for="new-price">Price</label><input type="number" step="0.01" id="new-price" placeholder="149.99"></div>
+                    <div class="form-group"><label for="new-category-id">Category ID</label><input type="number" id="new-category-id" placeholder="12"></div>
+                    <div class="form-group"><label for="new-supplier-id">Supplier ID</label><input type="number" id="new-supplier-id" placeholder="8"></div>
+                </div>
+                <div class="form-actions"><button class="btn btn-primary" onclick="createProduct()">Add product →</button></div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <div class="card-header"><div><div class="card-title">Product catalog</div><div class="card-description">Browse the inventory catalogue and place orders.</div></div></div>
+                <div class="search-row"><input id="product-search" type="search" placeholder="Search SKU or product name…"><span class="badge" id="product-count">0 items</span></div>
+                <div class="table-wrap"><table><thead><tr><th>SKU</th><th>Product</th><th>Price</th><th>Category</th><th>Supplier</th><th>Action</th></tr></thead><tbody id="products-table-body"></tbody></table></div>
+                <div class="pagination" id="products-pagination"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="suppliers-section">
+            <div class="card"><div class="card-header"><div><div class="card-title">Suppliers</div><div class="card-description">Connected supplier directory.</div></div><span class="badge" id="supplier-count">0 suppliers</span></div>
+                <div class="table-wrap"><table><thead><tr><th>Supplier</th><th>Contact email</th><th>Phone</th></tr></thead><tbody id="suppliers-table-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="stock-section">
+            <div class="card"><div class="card-header"><div><div class="card-title">Stock overview</div><div class="card-description">Current quantities by product and warehouse.</div></div><span class="badge" id="stock-count">0 records</span></div>
+                <div class="table-wrap"><table><thead><tr><th>Product</th><th>Warehouse</th><th>Quantity</th></tr></thead><tbody id="stock-table-body"></tbody></table></div><div class="pagination" id="stock-pagination"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="orders-section">
+            <div class="card"><div class="card-header"><div><div class="card-title" id="orders-heading">Orders</div><div class="card-description">Track order status and activity.</div></div><span class="badge" id="order-count">0 orders</span></div>
+                <div class="search-row"><input id="order-search" type="search" placeholder="Search order ID or product…"></div>
+                <div class="table-wrap"><table><thead><tr><th>Order</th><th>Status</th><th>Date</th><th>Items</th><th>Update</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+                <div class="pagination" id="orders-pagination"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="empty-section">
+            <div class="card empty-state"><div class="empty-icon">✓</div><h2>No module selected</h2><p style="margin-top:5px;">Choose a workspace module from the navigation.</p></div>
+        </section>
+    </main>
+</div>
+<script th:src="@{/js/auth.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/api.js}"></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+### 1. Login as SUPERADMIN (has implicit access to everything)
+# @name superadminLogin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "superadmin",
+  "password": "SuperAdmin123!"
+}
+
+### 2. Login as futureadmin (ADMIN with MANAGE_PRODUCTS granted from Phase 4 test)
+# @name futureAdminLogin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "futureadmin",
+  "password": "TestPass123!"
+}
+
+### 3. Register + login a plain USER for scoping tests
+# @name registerPlainUser
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "email": "user1@example.com",
+  "password": "TestPass123!"
+}
+
+### 4. GET products - open to any authenticated user (use plain USER token)
+GET http://localhost:8080/api/products?page=0
+Authorization: Bearer {{registerPlainUser.response.body.token}}
+
+### 5. CREATE product as futureadmin (has MANAGE_PRODUCTS) - should succeed
+# @name createProduct
+POST http://localhost:8080/api/products
+Authorization: Bearer {{futureAdminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "sku": "TEST-SKU-006",
+  "name": "Test Widget",
+  "description": "A widget created via API test",
+  "price": 19.99,
+  "categoryId": 2,
+  "supplierId": 1
+}
+
+### 6. CREATE product as plain USER - should fail (403), USER has no activities
+POST http://localhost:8080/api/products
+Authorization: Bearer {{registerPlainUser.response.body.token}}
+Content-Type: application/json
+
+{
+  "sku": "TEST-SKU-002",
+  "name": "Should Not Be Created",
+  "price": 9.99,
+  "categoryId": 2,
+  "supplierId": 1
+}
+
+### 7. UPDATE stock for the new product - futureadmin lacks MANAGE_STOCK, should fail (403)
+PUT http://localhost:8080/api/stock/{{createProduct.response.body.id}}
+Authorization: Bearer {{futureAdminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "warehouseLocation": "Warehouse-B",
+  "quantity": 100
+}
+
+### 8. UPDATE stock as SUPERADMIN - should succeed (auto-passes all checks)
+PUT http://localhost:8080/api/stock/{{createProduct.response.body.id}}
+Authorization: Bearer {{superadminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "warehouseLocation": "Warehouse-A",
+  "quantity": 100
+}
+
+### 9. PLACE ORDER as plain USER - should succeed (not a management action)
+# @name placeOrder
+POST http://localhost:8080/api/orders
+Authorization: Bearer {{registerPlainUser.response.body.token}}
+Content-Type: application/json
+
+{
+  "items": [
+    { "productId": {{createProduct.response.body.id}}, "quantity": 3 }
+  ]
+}
+
+### 10. GET orders as plain USER - should see ONLY their own order
+GET http://localhost:8080/api/orders
+Authorization: Bearer {{registerPlainUser.response.body.token}}
+
+### 11. GET orders as SUPERADMIN - should see ALL orders (5497+ including the new one)
+GET http://localhost:8080/api/orders
+Authorization: Bearer {{superadminLogin.response.body.token}}
+
+### 12. UPDATE order status as plain USER - should fail (403), lacks MANAGE_ORDERS
+PUT http://localhost:8080/api/orders/{{placeOrder.response.body.id}}/status
+Authorization: Bearer {{registerPlainUser.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": "PROCESSING"
+}
+
+### 13. UPDATE order status as SUPERADMIN - should succeed
+PUT http://localhost:8080/api/orders/{{placeOrder.response.body.id}}/status
+Authorization: Bearer {{superadminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": "PROCESSING"
+}
+
+### 14. DELETE the test product as futureadmin - should succeed
+DELETE http://localhost:8080/api/products/{{createProduct.response.body.id}}
+Authorization: Bearer {{futureAdminLogin.response.body.token}}

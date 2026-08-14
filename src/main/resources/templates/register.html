@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Register')}"></head>
+<body>
+<div class="auth-shell">
+    <div class="auth-layout">
+        <section class="auth-visual">
+            <div>
+                <a class="brand" th:href="@{/register}"><span class="brand-mark">I</span><span>Inven<span class="brand-accent">tra</span></span></a>
+                <h1>Build a cleaner flow from stock to order.</h1>
+                <p>Your account gives you a focused workspace based on the role and permissions assigned by your organization.</p>
+            </div>
+            <div class="auth-points">
+                <div class="auth-point"><i>01</i> Products and stock</div>
+                <div class="auth-point"><i>02</i> Suppliers and orders</div>
+                <div class="auth-point"><i>03</i> Permission-aware access</div>
+            </div>
+        </section>
+        <section class="auth-card">
+            <div class="eyebrow">Get started</div>
+            <h2>Create your account</h2>
+            <p class="sub">Register as a standard user and access your inventory workspace.</p>
+            <div id="error-box" class="alert alert-error hidden"></div>
+            <form id="register-form">
+                <div class="form-group"><label for="username">Username</label><input type="text" id="username" name="username" required minlength="3" placeholder="Choose a username"></div>
+                <div class="form-group" style="margin-top:14px;"><label for="email">Email</label><input type="email" id="email" name="email" required placeholder="you@example.com"></div>
+                <div class="form-group" style="margin-top:14px;"><label for="password">Password</label><input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></div>
+                <button type="submit" class="btn btn-primary btn-full" style="margin-top:18px;">Create account →</button>
+            </form>
+            <p class="auth-footer">Already have an account? <a th:href="@{/login}">Sign in</a></p>
+        </section>
+    </div>
+</div>
+<script th:src="@{/js/auth.js}"></script>
+<script>
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const box = document.getElementById('error-box'); box.classList.add('hidden');
+    try {
+        const res = await fetch('/api/auth/register', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({username:username.value.trim(), email:email.value.trim(), password:password.value})
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            box.textContent = err.fieldErrors ? Object.values(err.fieldErrors).join(', ') : (err.message || 'Registration failed.');
+            box.classList.remove('hidden'); return;
+        }
+        WareflowAuth.login(await res.json()); window.location.href='/dashboard';
+    } catch (err) { box.textContent='Unable to reach the server. Please try again.'; box.classList.remove('hidden'); }
+});
+</script>
+</body>
+</html>
